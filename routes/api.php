@@ -17,6 +17,7 @@ use App\Http\Controllers\Api\WithdrawalController;
 use App\Http\Controllers\Api\PasswordResetController;
 use App\Http\Controllers\Api\LoyaltyController;
 use App\Http\Controllers\Api\LoyaltyBoostController;
+use App\Http\Controllers\Api\ApkDownloadController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Route;
@@ -56,6 +57,10 @@ Route::get('/migrate/rollback', function () {
 Route::get('/unath', function () {
     return response()->json(['message' => 'Unauthenticated'], 401);
 })->name('login.auth');
+// Public APK Download routes (no auth required)
+Route::get('/apk/info', [ApkDownloadController::class, 'info']);
+Route::get('/apk/download', [ApkDownloadController::class, 'download'])->name('api.apk.download');
+
 // OTP routes
 Route::post('/otp/send-signup', [OtpController::class, 'sendSignupOtp']);
 Route::post('/otp/send-login', [OtpController::class, 'sendLoginOtp']);

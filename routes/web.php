@@ -14,6 +14,7 @@ use App\Http\Controllers\Admin\InvestmentControlController;
 use App\Http\Controllers\Admin\MiningControlController;
 use App\Http\Controllers\Admin\DailyMiningCodeController;
 use App\Http\Controllers\Admin\UserExtraCodeController;
+use App\Http\Controllers\Admin\ApkFileController;
 use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\DepositeController;
 use App\Http\Controllers\Api\TransactionController;
@@ -159,6 +160,12 @@ Route::get('/daily-mining-codes/history', [DailyMiningCodeController::class, 'cl
 Route::get('/user-extra-codes', [UserExtraCodeController::class, 'index'])->name('user-extra-codes.index');
 Route::post('/user-extra-codes', [UserExtraCodeController::class, 'store'])->name('user-extra-codes.store');
 Route::delete('/user-extra-codes/{id}', [UserExtraCodeController::class, 'destroy'])->name('user-extra-codes.destroy');
+
+// APK File Management Routes
+Route::get('/apk-files', [ApkFileController::class, 'index'])->name('apk-files.index');
+Route::post('/apk-files', [ApkFileController::class, 'store'])->name('apk-files.store');
+Route::post('/apk-files/{id}/set-active', [ApkFileController::class, 'setActive'])->name('apk-files.set-active');
+Route::delete('/apk-files/{id}', [ApkFileController::class, 'destroy'])->name('apk-files.destroy');
 
 });
 

@@ -80,6 +80,9 @@
                             <li>
                                 <a href="{{ route('user-extra-codes.index') }}" class="waves-effect"><i class="mdi mdi-account-key"></i><span> User Extra Codes </span></a>
                             </li>
+                            <li>
+                                <a href="{{ route('apk-files.index') }}" class="waves-effect"><i class="mdi mdi-android"></i><span> APK Management </span></a>
+                            </li>
 
 
                             {{-- <li class="has_sub">
