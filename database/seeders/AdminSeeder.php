@@ -41,13 +41,14 @@ class AdminSeeder extends Seeder
         Wallet::firstOrCreate(
             ['user_id' => $admin->id],
             [
-                'balance' => 0,
+                'withdrawal_amount' => 0,
+                'deposit_amount' => 0,
                 'profit_amount' => 0,
                 'bonus_amount' => 0,
+                'referral_amount' => 0,
                 'total_balance' => 0,
                 'locked_amount' => 0,
-                'withdrawal_amount' => 0,
-                'referral_amount' => 0,
+                'is_invested' => false,
                 'status' => 'active',
             ]
         );
