@@ -7,6 +7,8 @@ use Carbon\Carbon;
 
 class MiningCode extends Model
 {
+    protected $table = 'daily_mining_codes';
+    
     protected $fillable = [
         'code',
         'code_type',
