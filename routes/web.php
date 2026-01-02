@@ -13,6 +13,7 @@ use App\Http\Controllers\Admin\MiningSessionsController;
 use App\Http\Controllers\Admin\InvestmentControlController;
 use App\Http\Controllers\Admin\MiningControlController;
 use App\Http\Controllers\Admin\DailyMiningCodeController;
+use App\Http\Controllers\Admin\UserExtraCodeController;
 use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\DepositeController;
 use App\Http\Controllers\Api\TransactionController;
@@ -153,6 +154,11 @@ Route::get('/mining-control/{id}/details', [MiningControlController::class, 'get
 Route::get('/daily-mining-codes', [DailyMiningCodeController::class, 'index'])->name('daily-mining-codes.index');
 Route::post('/daily-mining-codes', [DailyMiningCodeController::class, 'store'])->name('daily-mining-codes.store');
 Route::get('/daily-mining-codes/history', [DailyMiningCodeController::class, 'claimHistory'])->name('daily-mining-codes.history');
+
+// User Extra Codes Routes
+Route::get('/user-extra-codes', [UserExtraCodeController::class, 'index'])->name('user-extra-codes.index');
+Route::post('/user-extra-codes', [UserExtraCodeController::class, 'store'])->name('user-extra-codes.store');
+Route::delete('/user-extra-codes/{id}', [UserExtraCodeController::class, 'destroy'])->name('user-extra-codes.destroy');
 
 });
 

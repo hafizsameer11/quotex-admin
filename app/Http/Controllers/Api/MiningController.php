@@ -8,6 +8,7 @@ use App\Models\ClaimedAmount;
 use App\Models\Investment;
 use App\Models\MiningSession;
 use App\Models\MiningCode;
+use App\Models\UserExtraCode;
 use App\Models\User;
 use App\Models\Wallet;
 use Carbon\Carbon;
@@ -289,7 +290,7 @@ class MiningController extends Controller
                     return ResponseHelper::error('You have already claimed rewards for this code today.', 400);
                 }
 
-                // Check if code exists but no session found (user might not have active investment when codes were set)
+                // Check if code exists but no session found - could be regular daily code or user-specific extra code
                 $validCode = MiningCode::where('date', $today)
                     ->where('is_active', true)
                     ->where(function($query) use ($code) {
@@ -298,8 +299,60 @@ class MiningController extends Controller
                     })
                     ->first();
 
-                if ($validCode) {
-                    // User has valid code but no session - they might have created investment after codes were set
+                // Also check for user-specific extra codes
+                $userExtraCode = UserExtraCode::where('user_id', $user->id)
+                    ->where('code_date', $today)
+                    ->where('is_active', true)
+                    ->where(function($query) use ($code) {
+                        $query->where('code', $code)
+                              ->orWhereRaw('LOWER(code) = LOWER(?)', [$code]);
+                    })
+                    ->first();
+
+                // Check if already claimed this user-specific code
+                if ($userExtraCode) {
+                    $claimedExtraCode = MiningSession::where('user_id', $user->id)
+                        ->where('code_date', $today)
+                        ->where('rewards_claimed', true)
+                        ->where(function($query) use ($code) {
+                            $query->where('used_code', $code)
+                                  ->orWhereRaw('LOWER(used_code) = LOWER(?)', [$code]);
+                        })
+                        ->first();
+
+                    if ($claimedExtraCode) {
+                        return ResponseHelper::error('You have already claimed rewards for this code today.', 400);
+                    }
+
+                    // User has valid extra code - create session if they have active investment
+                    $activeInvestment = Investment::with('investmentPlan')
+                        ->where('user_id', $user->id)
+                        ->where('status', 'active')
+                        ->orderBy('created_at', 'desc')
+                        ->first();
+
+                    if ($activeInvestment && $activeInvestment->investmentPlan) {
+                        // Create session for this user's extra code
+                        $newSession = MiningSession::create([
+                            'user_id' => $user->id,
+                            'investment_id' => $activeInvestment->id,
+                            'started_at' => now(),
+                            'status' => 'completed',
+                            'progress' => 100.00,
+                            'rewards_claimed' => false,
+                            'used_code' => $code,
+                            'code_date' => $today,
+                        ]);
+
+                        // Retry finding the session
+                        $session = MiningSession::where('id', $newSession->id)
+                            ->with('investment.investmentPlan')
+                            ->first();
+                    } else {
+                        return ResponseHelper::error('No active investment found. Please invest to claim rewards.', 400);
+                    }
+                } elseif ($validCode) {
+                    // User has valid regular code but no session - they might have created investment after codes were set
                     // Try to create session on-the-fly if they have active investment
                     $activeInvestment = Investment::with('investmentPlan')
                         ->where('user_id', $user->id)
@@ -327,9 +380,9 @@ class MiningController extends Controller
                     } else {
                         return ResponseHelper::error('No mining session found for this code. Please contact support.', 400);
                     }
+                } else {
+                    return ResponseHelper::error('Invalid or expired mining code. Please enter a valid code for today.', 400);
                 }
-
-                return ResponseHelper::error('Invalid or expired mining code. Please enter a valid code for today.', 400);
             }
 
             // Get the investment from session

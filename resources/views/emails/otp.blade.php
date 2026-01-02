@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MineProfit Verification Code</title>
+    <title>RQW - Royal Quotex Walefar Verification Code</title>
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -115,8 +115,8 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>MineProfit</h1>
-            <p>Your Secure Investment Platform</p>
+            <h1>RQW</h1>
+            <p>Royal Quotex Walefar - Copy Trading Platform</p>
         </div>
         
         <div class="content">
@@ -155,7 +155,7 @@
             <p style="margin: 0 0 30px 0; color: #6b7280; line-height: 1.6;">
                 @switch($type)
                     @case('signup')
-                        Thank you for choosing MineProfit! To complete your account registration, please use the verification code below.
+                        Thank you for choosing RQW - Royal Quotex Walefar! To complete your account registration, please use the verification code below.
                         @break
                     @case('login')
                         For your security, please enter the verification code below to complete your login.
@@ -179,7 +179,7 @@
             </div>
             
             <div class="warning">
-                <p>🔒 <strong>Security Notice:</strong> Never share this code with anyone. MineProfit staff will never ask for your verification code.</p>
+                <p>🔒 <strong>Security Notice:</strong> Never share this code with anyone. RQW staff will never ask for your verification code.</p>
             </div>
             
             <p style="margin: 30px 0 0 0; color: #6b7280; font-size: 14px;">
@@ -188,7 +188,7 @@
         </div>
         
         <div class="footer">
-            <p>© {{ date('Y') }} MineProfit. All rights reserved.</p>
+            <p>© {{ date('Y') }} RQW - Royal Quotex Walefar. All rights reserved.</p>
             <p>This is an automated message, please do not reply to this email.</p>
         </div>
     </div>

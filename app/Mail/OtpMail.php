@@ -33,10 +33,10 @@ class OtpMail extends Mailable
     public function envelope(): Envelope
     {
         $subject = match($this->type) {
-            'signup' => 'Verify Your Email - MineProfit Registration',
-            'login' => 'Login Verification Code - MineProfit',
-            'withdrawal' => 'Withdrawal Verification Code - MineProfit',
-            default => 'Verification Code - MineProfit'
+            'signup' => 'Verify Your Email - RQW Registration',
+            'login' => 'Login Verification Code - RQW',
+            'withdrawal' => 'Withdrawal Verification Code - RQW',
+            default => 'Verification Code - RQW'
         };
 
         return new Envelope(
