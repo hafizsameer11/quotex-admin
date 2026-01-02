@@ -74,6 +74,9 @@
                             <li>
                                 <a href="{{ route('mining-control.index') }}" class="waves-effect"><i class="mdi mdi-cog"></i><span> Mining Control </span></a>
                             </li>
+                            <li>
+                                <a href="{{ route('daily-mining-codes.index') }}" class="waves-effect"><i class="mdi mdi-key-variant"></i><span> Daily Mining Codes </span></a>
+                            </li>
 
 
                             {{-- <li class="has_sub">
