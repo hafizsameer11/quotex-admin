@@ -13,13 +13,16 @@ class MiningSession extends Model
         'status',
         'progress',
         'rewards_claimed',
-        'investment_id'
+        'investment_id',
+        'used_code',
+        'code_date',
     ];
 
     protected $casts = [
         'started_at' => 'datetime',
         'stopped_at' => 'datetime',
         'rewards_claimed' => 'boolean',
+        'code_date' => 'date',
     ];
 
     public function user()

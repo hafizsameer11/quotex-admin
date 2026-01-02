@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Models\ClaimedAmount;
 use App\Models\Investment;
 use App\Models\MiningSession;
+use App\Models\MiningCode;
 use App\Models\User;
 use App\Models\Wallet;
 use Carbon\Carbon;
@@ -241,78 +242,155 @@ class MiningController extends Controller
     }
 
     /**
-     * Claim rewards for a completed (unclaimed) session:
-     * - Compute amount = investment.amount * (profit_percentage / 100)
-     * - Create claimed_amounts record
-     * - Increment wallet.profit_amount
-     * - Mark session rewards_claimed = true
+     * Claim rewards using daily code:
+     * - Admin has already created sessions for all users when codes were set
+     * - User enters code, we find the matching session
+     * - If code matches and session not claimed yet, give reward (half of full amount)
+     * - Mark session as claimed and add to wallet
      */
-    public function claimRewards()
+    public function claimRewards(Request $request)
     {
         try {
             $user = Auth::user();
             if (!$user) return ResponseHelper::error('Unauthorized', 401);
 
+            // Validate code is provided
+            $request->validate([
+                'code' => 'required|string|max:50',
+            ]);
+
+            $today = Carbon::today();
+            $code = trim($request->code);
+
+            // Find the mining session for this user with matching code (case-insensitive)
+            // First try exact match, then try case-insensitive
             $session = MiningSession::where('user_id', $user->id)
-                ->where('status', 'active')
-                ->orWhere('status', 'completed')
+                ->where('code_date', $today)
                 ->where('rewards_claimed', false)
-                ->orderBy('started_at', 'desc') // oldest first, if multiple completed
+                ->where(function($query) use ($code) {
+                    $query->where('used_code', $code)
+                          ->orWhereRaw('LOWER(used_code) = LOWER(?)', [$code]);
+                })
+                ->with('investment.investmentPlan')
                 ->first();
-            Log::info("session for user $user->email", [$session]);
+
             if (!$session) {
+                // Check if code is valid but already claimed (case-insensitive)
+                $claimedSession = MiningSession::where('user_id', $user->id)
+                    ->where('code_date', $today)
+                    ->where('rewards_claimed', true)
+                    ->where(function($query) use ($code) {
+                        $query->where('used_code', $code)
+                              ->orWhereRaw('LOWER(used_code) = LOWER(?)', [$code]);
+                    })
+                    ->first();
 
-                return ResponseHelper::error('No completed mining session with unclaimed rewards', 400);
+                if ($claimedSession) {
+                    return ResponseHelper::error('You have already claimed rewards for this code today.', 400);
+                }
+
+                // Check if code exists but no session found (user might not have active investment when codes were set)
+                $validCode = MiningCode::where('date', $today)
+                    ->where('is_active', true)
+                    ->where(function($query) use ($code) {
+                        $query->where('code', $code)
+                              ->orWhereRaw('LOWER(code) = LOWER(?)', [$code]);
+                    })
+                    ->first();
+
+                if ($validCode) {
+                    // User has valid code but no session - they might have created investment after codes were set
+                    // Try to create session on-the-fly if they have active investment
+                    $activeInvestment = Investment::with('investmentPlan')
+                        ->where('user_id', $user->id)
+                        ->where('status', 'active')
+                        ->orderBy('created_at', 'desc')
+                        ->first();
+
+                    if ($activeInvestment && $activeInvestment->investmentPlan) {
+                        // Create session for this user
+                        $newSession = MiningSession::create([
+                            'user_id' => $user->id,
+                            'investment_id' => $activeInvestment->id,
+                            'started_at' => now(),
+                            'status' => 'completed',
+                            'progress' => 100.00,
+                            'rewards_claimed' => false,
+                            'used_code' => $code,
+                            'code_date' => $today,
+                        ]);
+
+                        // Retry finding the session
+                        $session = MiningSession::where('id', $newSession->id)
+                            ->with('investment.investmentPlan')
+                            ->first();
+                    } else {
+                        return ResponseHelper::error('No mining session found for this code. Please contact support.', 400);
+                    }
+                }
+
+                return ResponseHelper::error('Invalid or expired mining code. Please enter a valid code for today.', 400);
             }
 
-            // Get the investment tied to the session (ensures exact plan used when started)
-            $investment = Investment::with('investmentPlan')->find($session->investment_id);
-            Log::info("investment for user $user->email", [$investment]);
-
+            // Get the investment from session
+            $investment = $session->investment;
             if (!$investment || !$investment->investmentPlan) {
-                return ResponseHelper::error('Linked investment/plan not found for this session', 422);
+                return ResponseHelper::error('Investment/plan not found for this session.', 422);
             }
 
+            // Check if investment is still active
+            if ($investment->status !== 'active') {
+                return ResponseHelper::error('This investment is no longer active. Cannot claim rewards.', 400);
+            }
+
+            // Calculate reward as HALF of normal (since 2 codes = 1 full session)
             $percentage = (float) $investment->investmentPlan->profit_percentage;
             $baseAmount = (float) $investment->amount;
-            $amount = round($baseAmount * ($percentage / 100), 2);
+            $fullAmount = round($baseAmount * ($percentage / 100), 2);
+            $amount = round($fullAmount / 2, 2); // Half reward per code
 
             if ($amount <= 0) {
                 return ResponseHelper::error('Calculated reward amount is zero. Check plan percentage and investment amount.', 422);
             }
 
             DB::transaction(function () use ($user, $session, $investment, $amount) {
-                // 1) Create claimed_amounts record
+                // 1) Mark session as claimed
+                $session->update([
+                    'rewards_claimed' => true,
+                    'stopped_at' => now(),
+                ]);
+
+                // 2) Create claimed_amounts record
                 ClaimedAmount::create([
                     'user_id'       => $user->id,
                     'investment_id' => $investment->id,
                     'amount'        => $amount,
-                    'reason'        => 'mining_daily_profit',
+                    'reason'        => 'mining_daily_profit_code_claim',
                 ]);
 
-                // 2) Update wallet.profit_amount
+                // 3) Update wallet.profit_amount
                 $wallet = Wallet::firstOrCreate(
                     ['user_id' => $user->id],
                     ['balance' => 0, 'profit_amount' => 0, 'bonus_amount' => 0]
                 );
 
                 $wallet->increment('profit_amount', $amount);
-                // also updat the total_balance
+                // also update the total_balance
                 $wallet->increment('total_balance', $amount);
-                // 3) Mark session claimed
-                $session->update(['rewards_claimed' => true, 'status' => 'completed']);
-                // MiningSession::where('id', $session->id)->update(['rewards_claimed' => true]);
-
             });
 
             return ResponseHelper::success([
-                'session_id'  => $session->id,
                 'claimed'     => true,
                 'amount'      => $amount,
-                'currency'    => 'USD', // adjust if you track currencies
+                'currency'    => 'USD',
                 'message'     => 'Rewards claimed and added to wallet profit_amount',
             ], 'Mining rewards claimed successfully');
         } catch (Exception $ex) {
+            Log::error('Claim rewards error', [
+                'user_id' => Auth::id(),
+                'error' => $ex->getMessage(),
+                'trace' => $ex->getTraceAsString(),
+            ]);
             return ResponseHelper::error('Failed to claim mining rewards: ' . $ex->getMessage());
         }
     }

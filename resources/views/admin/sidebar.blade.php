@@ -10,7 +10,7 @@
                     <div class="text-center">
                         <!--<a href="index.html" class="logo"><i class="mdi mdi-assistant"></i>Zoter</a>-->
                         <a href="{{ route('dashboard') }}" class="logo">
-                            {{-- <h2 class=" text-white">InvestPro</h2> --}}
+                            {{-- <h2 class=" text-white">MineProfit</h2> --}}
                         </a>
                     </div>
                 </div>

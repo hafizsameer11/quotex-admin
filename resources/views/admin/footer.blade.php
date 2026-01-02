@@ -3,7 +3,7 @@
             </div> <!-- Page content Wrapper -->
  </div> <!-- content -->
 <footer class="footer">
-            © 2025 InvestPro by HMS TECH.
+            © 2025 MineProfit by HMS TECH.
         </footer>
 
     </div>

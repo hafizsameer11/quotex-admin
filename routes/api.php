@@ -68,6 +68,7 @@ Route::post('/password/reset', [PasswordResetController::class, 'resetPassword']
 
 Route::post('/register', [UserController::class, 'register']);
 Route::post('/login', [UserController::class, 'login']);
+
 Route::post('/logout', [UserController::class, 'logout'])->middleware('auth:sanctum');
 Route::get('/allUser', [UserController::class, 'allUser'])->middleware('auth:sanctum');
 Route::post('/update', [UserController::class, 'update'])->middleware('auth:sanctum');

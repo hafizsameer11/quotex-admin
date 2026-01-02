@@ -1,4 +1,4 @@
-# Email Configuration Guide for InvestPro
+# Email Configuration Guide for MineProfit
 
 ## Current Status
 - ✅ OTP generation and verification working
@@ -18,7 +18,7 @@ MAIL_USERNAME=your-email@gmail.com
 MAIL_PASSWORD=your-app-password
 MAIL_ENCRYPTION=tls
 MAIL_FROM_ADDRESS=your-email@gmail.com
-MAIL_FROM_NAME="InvestPro"
+MAIL_FROM_NAME="MineProfit"
 ```
 
 **Note:** For Gmail, you need to:
@@ -37,7 +37,7 @@ MAIL_USERNAME=your-mailtrap-username
 MAIL_PASSWORD=your-mailtrap-password
 MAIL_ENCRYPTION=tls
 MAIL_FROM_ADDRESS=no-reply@investpro.com
-MAIL_FROM_NAME="InvestPro"
+MAIL_FROM_NAME="MineProfit"
 ```
 
 ### Option 3: SendGrid (Production)
@@ -51,7 +51,7 @@ MAIL_USERNAME=apikey
 MAIL_PASSWORD=your-sendgrid-api-key
 MAIL_ENCRYPTION=tls
 MAIL_FROM_ADDRESS=noreply@yourdomain.com
-MAIL_FROM_NAME="InvestPro"
+MAIL_FROM_NAME="MineProfit"
 ```
 
 ### Option 4: AWS SES (Production)
@@ -63,7 +63,7 @@ AWS_ACCESS_KEY_ID=your-access-key
 AWS_SECRET_ACCESS_KEY=your-secret-key
 AWS_DEFAULT_REGION=us-east-1
 MAIL_FROM_ADDRESS=noreply@yourdomain.com
-MAIL_FROM_NAME="InvestPro"
+MAIL_FROM_NAME="MineProfit"
 ```
 
 ## Testing Email Configuration
@@ -75,7 +75,7 @@ php artisan tinker
 
 Then run:
 ```php
-Mail::raw('Test email from InvestPro', function($message) {
+Mail::raw('Test email from MineProfit', function($message) {
     $message->to('your-test-email@example.com')
             ->subject('Test Email');
 });

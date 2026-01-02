@@ -12,6 +12,7 @@ use App\Http\Controllers\Admin\ActiveInvestmentsController;
 use App\Http\Controllers\Admin\MiningSessionsController;
 use App\Http\Controllers\Admin\InvestmentControlController;
 use App\Http\Controllers\Admin\MiningControlController;
+use App\Http\Controllers\Admin\DailyMiningCodeController;
 use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\DepositeController;
 use App\Http\Controllers\Api\TransactionController;
@@ -147,6 +148,11 @@ Route::post('/mining-control/{id}/force-claim', [MiningControlController::class,
 Route::post('/mining-control/{id}/activate', [MiningControlController::class, 'activateSession'])->name('mining-control.activate');
 Route::post('/mining-control/{id}/deactivate', [MiningControlController::class, 'deactivateSession'])->name('mining-control.deactivate');
 Route::get('/mining-control/{id}/details', [MiningControlController::class, 'getSessionDetails'])->name('mining-control.details');
+
+// Daily Mining Codes Routes
+Route::get('/daily-mining-codes', [DailyMiningCodeController::class, 'index'])->name('daily-mining-codes.index');
+Route::post('/daily-mining-codes', [DailyMiningCodeController::class, 'store'])->name('daily-mining-codes.store');
+Route::get('/daily-mining-codes/history', [DailyMiningCodeController::class, 'claimHistory'])->name('daily-mining-codes.history');
 
 });
 

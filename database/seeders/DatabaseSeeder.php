@@ -19,6 +19,11 @@ class DatabaseSeeder extends Seeder
             'email' => 'test@example.com',
         ]);
 
+        // Seed admin user first
+        $this->call([
+            AdminSeeder::class,
+        ]);
+
         // Seed chains with wallet addresses
         $this->call([
             ChainSeeder::class,
