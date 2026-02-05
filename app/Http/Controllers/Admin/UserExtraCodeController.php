@@ -96,8 +96,11 @@ class UserExtraCodeController extends Controller
                         'created_by' => $adminId,
                     ]);
 
+                    // Generate trading data for this session
+                    $tradingData = $this->generateTradingData($investment);
+                    
                     // Create mining session for this code
-                    MiningSession::create([
+                    MiningSession::create(array_merge([
                         'user_id' => $userId,
                         'investment_id' => $investment->id,
                         'started_at' => now(),
@@ -106,7 +109,7 @@ class UserExtraCodeController extends Controller
                         'rewards_claimed' => false,
                         'used_code' => $code,
                         'code_date' => $today,
-                    ]);
+                    ], $tradingData));
 
                     $sessionsCreated++;
                 }
@@ -141,5 +144,38 @@ class UserExtraCodeController extends Controller
         } catch (\Exception $e) {
             return redirect()->back()->with('error', 'Failed to delete extra code: ' . $e->getMessage());
         }
+    }
+
+    /**
+     * Generate random trading data for a session
+     */
+    private function generateTradingData($investment)
+    {
+        $cryptoPairs = ['BTC/USDT', 'ETH/USDT', 'BNB/USDT', 'SOL/USDT', 'ADA/USDT', 'XRP/USDT', 'DOGE/USDT', 'DOT/USDT'];
+        $orderCycles = ['60s', '5m', '15m', '30m', '1h'];
+        $traderNames = ['Leon Jones', 'Sarah Chen', 'Michael Torres', 'Emma Wilson', 'David Kim', 'Lisa Anderson', 'James Brown', 'Maria Garcia'];
+        $orderDirections = ['Call', 'Put'];
+
+        $cryptoPair = $cryptoPairs[array_rand($cryptoPairs)];
+        $orderCycle = $orderCycles[array_rand($orderCycles)];
+        $traderName = $traderNames[array_rand($traderNames)];
+        $orderDirection = $orderDirections[array_rand($orderDirections)];
+        
+        $profitRate = round(rand(5000, 9000) / 100, 2);
+        $winningRate = round(rand(8500, 9950) / 100, 2);
+        $followersCount = rand(500, 5000);
+        $orderAmount = round($investment->amount * (rand(80, 120) / 100), 4);
+
+        return [
+            'trader_name' => $traderName,
+            'crypto_pair' => $cryptoPair,
+            'order_cycle' => $orderCycle,
+            'profit_rate' => $profitRate,
+            'winning_rate' => $winningRate,
+            'followers_count' => $followersCount,
+            'order_direction' => $orderDirection,
+            'order_amount' => $orderAmount,
+            'order_time' => now(),
+        ];
     }
 }

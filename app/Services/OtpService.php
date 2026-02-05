@@ -162,7 +162,8 @@ class OtpService
     public function verifyOtp(string $email, string $otpCode, string $type): array
     {
         try {
-            $otp = true;
+            // Use the Otp model's static verifyOtp method
+            $otp = Otp::verifyOtp($email, $otpCode, $type);
             
             if ($otp) {
                 return [
@@ -179,7 +180,7 @@ class OtpService
             Log::error("OTP verification error", ['error' => $e->getMessage()]);
             return [
                 'success' => false,
-                'message' => 'Failed to verify OTP'
+                'message' => 'Failed to verify OTP: ' . $e->getMessage()
             ];
         }
     }

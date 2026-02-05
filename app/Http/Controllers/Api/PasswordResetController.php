@@ -63,7 +63,7 @@ class PasswordResetController extends Controller
         try {
             $validator = Validator::make($request->all(), [
                 'email' => 'required|email',
-                // 'otp' => 'required|string|size:6',
+                'otp' => 'required|string|size:6',
                 'password' => 'required|string|min:6|confirmed'
             ]);
 
@@ -76,10 +76,10 @@ class PasswordResetController extends Controller
             $password = $request->password;
 
             // Verify OTP
-            // $otpResult = $this->otpService->verifyOtp($email, $otp, 'password_reset');
-            // if (!$otpResult['success']) {
-            //     return ResponseHelper::error($otpResult['message'], 422);
-            // }
+            $otpResult = $this->otpService->verifyOtp($email, $otp, 'password_reset');
+            if (!$otpResult['success']) {
+                return ResponseHelper::error($otpResult['message'], 422);
+            }
 
             // Update password
             $user = User::where('email', $email)->first();

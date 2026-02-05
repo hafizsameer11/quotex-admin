@@ -144,6 +144,7 @@ Route::get('/chains/{id}', [ChainController::class, 'show'])->middleware('auth:s
 // Mining routes
 Route::post('/mining/start', [MiningController::class, 'start'])->middleware('auth:sanctum');
 Route::get('/mining/status', [MiningController::class, 'status'])->middleware('auth:sanctum');
+Route::get('/mining/available-sessions', [MiningController::class, 'getAvailableSessions'])->middleware('auth:sanctum');
 Route::post('/mining/stop', [MiningController::class, 'stop'])->middleware('auth:sanctum');
 Route::post('/mining/claim-rewards', [MiningController::class, 'claimRewards'])->middleware('auth:sanctum');
 

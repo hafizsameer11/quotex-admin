@@ -14,7 +14,7 @@ class RewardsController extends Controller
 {
     public function index()
     {
-        $users = User::with('wallet')->paginate(20);
+        $users = User::where('role', '!=', 'admin')->with('wallet')->paginate(20);
         return view('admin.pages.rewards', compact('users'));
     }
 

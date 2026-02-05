@@ -241,7 +241,7 @@ class UserController extends Controller
     public function allUser()
     {
         try {
-            $users = User::all();
+            $users = User::where('role', '!=', 'admin')->get();
             return ResponseHelper::success($users, "All Users");
         } catch (Exception $ex) {
             return ResponseHelper::error('Don"t fetch all the users' . $ex);
@@ -362,10 +362,10 @@ class UserController extends Controller
     // user-page
     public function user_page()
     {
-        $all_users = User::get();
-        $total_users = User::count();
-        $active_users = User::where('status', 'active')->count();
-        $inactive_user = User::where('status', 'inactive')->count();
+        $all_users = User::where('role', '!=', 'admin')->get();
+        $total_users = User::where('role', '!=', 'admin')->count();
+        $active_users = User::where('role', '!=', 'admin')->where('status', 'active')->count();
+        $inactive_user = User::where('role', '!=', 'admin')->where('status', 'inactive')->count();
 
         return view('admin.pages.users', compact('all_users', 'total_users', 'active_users', 'inactive_user'));
     }

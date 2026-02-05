@@ -243,6 +243,49 @@ class MiningController extends Controller
     }
 
     /**
+     * Get available trading sessions for today
+     */
+    public function getAvailableSessions(Request $request)
+    {
+        try {
+            $user = Auth::user();
+            if (!$user) return ResponseHelper::error('Unauthorized', 401);
+
+            $today = Carbon::today();
+
+            // Get all unclaimed sessions for today with trading data
+            $sessions = MiningSession::where('code_date', $today)
+                ->where('rewards_claimed', false)
+                ->whereNotNull('trader_name')
+                ->whereNotNull('crypto_pair')
+                ->select([
+                    'id',
+                    'trader_name',
+                    'crypto_pair',
+                    'order_cycle',
+                    'profit_rate',
+                    'winning_rate',
+                    'followers_count',
+                    'order_direction',
+                    'order_amount',
+                    'order_time',
+                    'used_code',
+                ])
+                ->groupBy('trader_name', 'crypto_pair', 'order_cycle', 'profit_rate', 'winning_rate', 'followers_count', 'order_direction', 'order_amount', 'order_time', 'used_code', 'id')
+                ->orderBy('order_time', 'desc')
+                ->get()
+                ->unique(function ($session) {
+                    return $session->trader_name . '_' . $session->crypto_pair;
+                })
+                ->values();
+
+            return ResponseHelper::success($sessions, 'Available trading sessions retrieved successfully');
+        } catch (Exception $ex) {
+            return ResponseHelper::error('Failed to get trading sessions: ' . $ex->getMessage());
+        }
+    }
+
+    /**
      * Claim rewards using daily code:
      * - Admin has already created sessions for all users when codes were set
      * - User enters code, we find the matching session
@@ -332,8 +375,11 @@ class MiningController extends Controller
                         ->first();
 
                     if ($activeInvestment && $activeInvestment->investmentPlan) {
+                        // Generate trading data for this session
+                        $tradingData = $this->generateTradingData($activeInvestment);
+                        
                         // Create session for this user's extra code
-                        $newSession = MiningSession::create([
+                        $newSession = MiningSession::create(array_merge([
                             'user_id' => $user->id,
                             'investment_id' => $activeInvestment->id,
                             'started_at' => now(),
@@ -342,7 +388,7 @@ class MiningController extends Controller
                             'rewards_claimed' => false,
                             'used_code' => $code,
                             'code_date' => $today,
-                        ]);
+                        ], $tradingData));
 
                         // Retry finding the session
                         $session = MiningSession::where('id', $newSession->id)
@@ -361,8 +407,11 @@ class MiningController extends Controller
                         ->first();
 
                     if ($activeInvestment && $activeInvestment->investmentPlan) {
+                        // Generate trading data for this session
+                        $tradingData = $this->generateTradingData($activeInvestment);
+                        
                         // Create session for this user
-                        $newSession = MiningSession::create([
+                        $newSession = MiningSession::create(array_merge([
                             'user_id' => $user->id,
                             'investment_id' => $activeInvestment->id,
                             'started_at' => now(),
@@ -371,7 +420,7 @@ class MiningController extends Controller
                             'rewards_claimed' => false,
                             'used_code' => $code,
                             'code_date' => $today,
-                        ]);
+                        ], $tradingData));
 
                         // Retry finding the session
                         $session = MiningSession::where('id', $newSession->id)
@@ -446,5 +495,38 @@ class MiningController extends Controller
             ]);
             return ResponseHelper::error('Failed to claim mining rewards: ' . $ex->getMessage());
         }
+    }
+
+    /**
+     * Generate random trading data for a session
+     */
+    private function generateTradingData($investment)
+    {
+        $cryptoPairs = ['BTC/USDT', 'ETH/USDT', 'BNB/USDT', 'SOL/USDT', 'ADA/USDT', 'XRP/USDT', 'DOGE/USDT', 'DOT/USDT'];
+        $orderCycles = ['60s', '5m', '15m', '30m', '1h'];
+        $traderNames = ['Leon Jones', 'Sarah Chen', 'Michael Torres', 'Emma Wilson', 'David Kim', 'Lisa Anderson', 'James Brown', 'Maria Garcia'];
+        $orderDirections = ['Call', 'Put'];
+
+        $cryptoPair = $cryptoPairs[array_rand($cryptoPairs)];
+        $orderCycle = $orderCycles[array_rand($orderCycles)];
+        $traderName = $traderNames[array_rand($traderNames)];
+        $orderDirection = $orderDirections[array_rand($orderDirections)];
+        
+        $profitRate = round(rand(5000, 9000) / 100, 2);
+        $winningRate = round(rand(8500, 9950) / 100, 2);
+        $followersCount = rand(500, 5000);
+        $orderAmount = round($investment->amount * (rand(80, 120) / 100), 4);
+
+        return [
+            'trader_name' => $traderName,
+            'crypto_pair' => $cryptoPair,
+            'order_cycle' => $orderCycle,
+            'profit_rate' => $profitRate,
+            'winning_rate' => $winningRate,
+            'followers_count' => $followersCount,
+            'order_direction' => $orderDirection,
+            'order_amount' => $orderAmount,
+            'order_time' => now(),
+        ];
     }
 }

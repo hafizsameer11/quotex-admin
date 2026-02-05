@@ -154,9 +154,9 @@ public function dashboard()
 
     public function index()
     {
-        $total_users = User::count();
-        $all_users = User::latest()->limit(10)->get();
-        $active_users = User::where('status', 'active')->count();
+        $total_users = User::where('role', '!=', 'admin')->count();
+        $all_users = User::where('role', '!=', 'admin')->latest()->limit(10)->get();
+        $active_users = User::where('role', '!=', 'admin')->where('status', 'active')->count();
 
         $total_deposit = Deposit::sum('amount');
         $total_withdrawal = Withdrawal::where('status', 'active')->count();

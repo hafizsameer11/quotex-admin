@@ -16,6 +16,15 @@ class MiningSession extends Model
         'investment_id',
         'used_code',
         'code_date',
+        'trader_name',
+        'crypto_pair',
+        'order_cycle',
+        'profit_rate',
+        'winning_rate',
+        'followers_count',
+        'order_direction',
+        'order_amount',
+        'order_time',
     ];
 
     protected $casts = [
@@ -23,6 +32,10 @@ class MiningSession extends Model
         'stopped_at' => 'datetime',
         'rewards_claimed' => 'boolean',
         'code_date' => 'date',
+        'order_time' => 'datetime',
+        'profit_rate' => 'decimal:2',
+        'winning_rate' => 'decimal:2',
+        'order_amount' => 'decimal:4',
     ];
 
     public function user()
