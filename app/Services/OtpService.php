@@ -135,7 +135,9 @@ class OtpService
         try {
             $otp = Otp::createOtp($email, 'password_reset', $userId);
             
-            if ($this->sendOtp($email, $otp->otp_code, 'password_reset')) {
+            $emailSent = $this->sendOtp($email, $otp->otp_code, 'password_reset');
+            
+            if ($emailSent) {
                 return [
                     'success' => true,
                     'message' => 'Password reset OTP sent successfully to your email',
@@ -143,15 +145,25 @@ class OtpService
                 ];
             }
 
+            // Log the failure for debugging
+            Log::warning("Password reset OTP email sending failed", [
+                'email' => $email,
+                'otp_code' => $otp->otp_code,
+                'mail_driver' => config('mail.default')
+            ]);
+
             return [
                 'success' => false,
-                'message' => 'Failed to send OTP'
+                'message' => 'Failed to send OTP email. Please check your email configuration or try again later.'
             ];
         } catch (\Exception $e) {
-            Log::error("Password reset OTP error", ['error' => $e->getMessage()]);
+            Log::error("Password reset OTP error", [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
             return [
                 'success' => false,
-                'message' => 'Failed to generate OTP'
+                'message' => 'Failed to generate OTP: ' . $e->getMessage()
             ];
         }
     }
