@@ -28,7 +28,6 @@ class DatabaseSeeder extends Seeder
         $this->call([
             ChainSeeder::class,
             InvestmentPlanSeeder::class,
-            NewsSeeder::class,
         ]);
     }
 }
