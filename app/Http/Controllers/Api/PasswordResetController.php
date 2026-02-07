@@ -75,10 +75,15 @@ class PasswordResetController extends Controller
             $otp = $request->otp;
             $password = $request->password;
 
-            // Verify OTP
-            $otpResult = $this->otpService->verifyOtp($email, $otp, 'password_reset');
-            if (!$otpResult['success']) {
-                return ResponseHelper::error($otpResult['message'], 422);
+            // Verify OTP exists and is valid (but don't mark as used yet - it was already verified in verifyResetOtp)
+            $otpRecord = \App\Models\Otp::where('email', $email)
+                ->where('otp_code', $otp)
+                ->where('type', 'password_reset')
+                ->where('used', false)
+                ->first();
+
+            if (!$otpRecord || $otpRecord->isExpired()) {
+                return ResponseHelper::error('Invalid or expired OTP', 422);
             }
 
             // Update password
@@ -91,6 +96,9 @@ class PasswordResetController extends Controller
                 'password' => Hash::make($password)
             ]);
 
+            // Mark OTP as used after successful password reset
+            $otpRecord->markAsUsed();
+
             return ResponseHelper::success(null, 'Password reset successfully');
         } catch (\Exception $e) {
             return ResponseHelper::error('Failed to reset password: ' . $e->getMessage(), 500);
@@ -99,6 +107,7 @@ class PasswordResetController extends Controller
 
     /**
      * Verify OTP only (for frontend validation)
+     * Note: We don't mark OTP as used here - it will be marked when password is actually reset
      */
     public function verifyResetOtp(Request $request)
     {
@@ -112,17 +121,26 @@ class PasswordResetController extends Controller
                 return ResponseHelper::error($validator->errors()->first(), 422);
             }
 
-            $result = $this->otpService->verifyOtp(
-                $request->email,
-                $request->otp,
-                'password_reset'
-            );
+            // Check if OTP exists and is valid (but don't mark as used yet)
+            $otpRecord = \App\Models\Otp::where('email', $request->email)
+                ->where('otp_code', $request->otp)
+                ->where('type', 'password_reset')
+                ->where('used', false)
+                ->first();
 
-            if ($result['success']) {
-                return ResponseHelper::success($result, $result['message']);
+            if (!$otpRecord) {
+                return ResponseHelper::error('Invalid OTP', 400);
             }
 
-            return ResponseHelper::error($result['message'], 400);
+            if ($otpRecord->isExpired()) {
+                return ResponseHelper::error('OTP has expired', 400);
+            }
+
+            // Don't mark as used here - will be marked when password is reset
+            return ResponseHelper::success([
+                'success' => true,
+                'message' => 'OTP verified successfully'
+            ], 'OTP verified successfully');
         } catch (\Exception $e) {
             return ResponseHelper::error('Failed to verify OTP: ' . $e->getMessage(), 500);
         }
