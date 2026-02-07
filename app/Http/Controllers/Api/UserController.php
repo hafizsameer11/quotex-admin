@@ -54,7 +54,7 @@ class UserController extends Controller
             $user = User::create($data);
             
             // Mark OTP as used after successful registration
-            $otpRecord->markAsUsed();
+            // $otpRecord->markAsUsed();
             $this->createWallet($user);
 
             // Create referral record
