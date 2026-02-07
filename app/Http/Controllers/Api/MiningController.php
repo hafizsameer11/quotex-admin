@@ -244,6 +244,7 @@ class MiningController extends Controller
 
     /**
      * Get available trading sessions for today
+     * Only shows sessions for codes the user has access to (daily codes + extra codes)
      */
     public function getAvailableSessions(Request $request)
     {
@@ -253,9 +254,32 @@ class MiningController extends Controller
 
             $today = Carbon::today();
 
-            // Get all unclaimed sessions for today with trading data
-            $sessions = MiningSession::where('code_date', $today)
-                ->where('rewards_claimed', false)
+            // Get codes available to this user
+            // 1. Daily codes (code1 and code2)
+            $dailyCodes = MiningCode::where('date', $today)
+                ->where('is_active', true)
+                ->pluck('code')
+                ->toArray();
+
+            // 2. User-specific extra codes
+            $extraCodes = UserExtraCode::where('user_id', $user->id)
+                ->where('code_date', $today)
+                ->where('is_active', true)
+                ->pluck('code')
+                ->toArray();
+
+            // Combine all available codes for this user
+            $availableCodes = array_merge($dailyCodes, $extraCodes);
+
+            if (empty($availableCodes)) {
+                return ResponseHelper::success([], 'No trading sessions available. Please wait for admin to set codes.');
+            }
+
+            // Get sessions for this user with codes they have access to
+            // Include both claimed and unclaimed sessions (to show "Already Claimed" status)
+            $sessions = MiningSession::where('user_id', $user->id)
+                ->where('code_date', $today)
+                ->whereIn('used_code', $availableCodes)
                 ->whereNotNull('trader_name')
                 ->whereNotNull('crypto_pair')
                 ->select([
@@ -270,12 +294,29 @@ class MiningController extends Controller
                     'order_amount',
                     'order_time',
                     'used_code',
+                    'rewards_claimed',
                 ])
-                ->groupBy('trader_name', 'crypto_pair', 'order_cycle', 'profit_rate', 'winning_rate', 'followers_count', 'order_direction', 'order_amount', 'order_time', 'used_code', 'id')
+                ->orderBy('rewards_claimed', 'asc') // Unclaimed first
                 ->orderBy('order_time', 'desc')
                 ->get()
+                ->map(function ($session) {
+                    return [
+                        'id' => $session->id,
+                        'trader_name' => $session->trader_name,
+                        'crypto_pair' => $session->crypto_pair,
+                        'order_cycle' => $session->order_cycle,
+                        'profit_rate' => $session->profit_rate,
+                        'winning_rate' => $session->winning_rate,
+                        'followers_count' => $session->followers_count,
+                        'order_direction' => $session->order_direction,
+                        'order_amount' => $session->order_amount,
+                        'order_time' => $session->order_time,
+                        'used_code' => $session->used_code,
+                        'is_claimed' => $session->rewards_claimed, // Add claimed status
+                    ];
+                })
                 ->unique(function ($session) {
-                    return $session->trader_name . '_' . $session->crypto_pair;
+                    return $session['trader_name'] . '_' . $session['crypto_pair'] . '_' . $session['used_code'];
                 })
                 ->values();
 
