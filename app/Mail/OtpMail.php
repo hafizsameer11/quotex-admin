@@ -33,16 +33,22 @@ class OtpMail extends Mailable
     public function envelope(): Envelope
     {
         $subject = match($this->type) {
-            'signup' => 'Verify Your Email - RQW Registration',
-            'login' => 'Login Verification Code - RQW',
-            'withdrawal' => 'Withdrawal Verification Code - RQW',
-            default => 'Verification Code - RQW'
+            'signup' => 'Verify Your Email - ANH Registration',
+            'login' => 'Login Verification Code - ANH',
+            'withdrawal' => 'Withdrawal Verification Code - ANH',
+            default => 'Verification Code - ANH'
         };
 
-        return new Envelope(
+        $envelope = new Envelope(
             subject: $subject,
-            from: config('mail.from.address'),
         );
+        
+        $envelope->from(
+            address: config('mail.from.address'),
+            name: config('mail.from.name', 'ANH Asset Holding Network')
+        );
+        
+        return $envelope;
     }
 
     /**
