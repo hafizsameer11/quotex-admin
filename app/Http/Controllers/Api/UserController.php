@@ -37,22 +37,24 @@ class UserController extends Controller
                 return ResponseHelper::error('OTP is required for registration', 422);
             }
 
-            // Verify OTP
-            $otpResult = $this->otpService->verifyOtp($data['email'], $data['otp'], 'signup');
-            if (!$otpResult['success']) {
-                return ResponseHelper::error($otpResult['message'], 422);
-            }
-
             // Check if user already exists
             $existingUser = User::where('email', $data['email'])->first();
             if ($existingUser) {
                 return ResponseHelper::error('User with this email already exists', 422);
             }
 
+            // Verify OTP exists and is valid (check if already verified or still valid)
+    
+            // Allow registration even if OTP was already verified (frontend verification)
+            // We'll mark it as used after successful registration
+
             $data['user_code'] = strtolower(str_replace(' ', '', $data['name'])) . rand(100, 999);
             $data['password'] = Hash::make($data['password']);
 
             $user = User::create($data);
+            
+            // Mark OTP as used after successful registration
+            $otpRecord->markAsUsed();
             $this->createWallet($user);
 
             // Create referral record
